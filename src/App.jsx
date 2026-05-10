@@ -393,8 +393,8 @@ export default function App() {
           <button className="sub small" onClick={() => document.getElementById('meal-edit')?.scrollIntoView({behavior:'smooth', block:'start'})}>ごはんの設定を変更</button>
         </div>
         <div className="meal-grid">
-          <DogMeal title="ウリ" foodAmt={mealConfig.uriFoodAmt} rice={mealConfig.uriRiceAmt} hot={mealConfig.uriHotcookNote} items={mealConfig.uriItems} />
-          <DogMeal title="ルル" foodAmt={mealConfig.luluFoodAmt} rice={mealConfig.luluRice} hot={mealConfig.luluHotcookNote} items={mealConfig.luluItems} />
+          <DogMeal title="ウリ" type="uri" foodAmt={mealConfig.uriFoodAmt} rice={mealConfig.uriRiceAmt} hot={mealConfig.uriHotcookNote} items={mealConfig.uriItems} />
+          <DogMeal title="ルル" type="lulu" foodAmt={mealConfig.luluFoodAmt} rice={mealConfig.luluRice} hot={mealConfig.luluHotcookNote} items={mealConfig.luluItems} />
         </div>
         <div className="card cook-card">
           <h3>ホットクック共通おかず</h3>
@@ -515,9 +515,28 @@ export default function App() {
   </div>
 }
 
-function DogMeal({ title, foodAmt, rice, hot, items = [] }) {
-  return <div className="meal-card">
-    <h3>{title}</h3>
+function DogAvatar({ type }) {
+  const isUri = type === 'uri'
+  return <div className={`dog-avatar ${isUri ? 'uri' : 'lulu'}`} aria-hidden="true">
+    <div className="dog-ear left"></div>
+    <div className="dog-ear right"></div>
+    <div className="dog-face">
+      <span className="eye left"></span>
+      <span className="eye right"></span>
+      <span className="nose"></span>
+      <span className="mouth"></span>
+    </div>
+  </div>
+}
+function DogMeal({ title, type, foodAmt, rice, hot, items = [] }) {
+  return <div className={`meal-card ${type || ''}`}>
+    <div className="dog-title">
+      <DogAvatar type={type} />
+      <div>
+        <h3>{title}</h3>
+        <small>{type === 'uri' ? 'コーギー' : 'ダックス'}</small>
+      </div>
+    </div>
     <div className="meal-line"><span>フード</span><b>{foodAmt}</b></div>
     <div className="meal-line"><span>白米</span><b>{rice}</b></div>
     <div className="meal-line"><span>共通おかず</span><b>{hot}</b></div>
