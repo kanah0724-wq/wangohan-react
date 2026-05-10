@@ -43,3 +43,11 @@
   content:none!important;
   display:none!important;
 }
+
+/* fixed11: final saved time / backup reminder / safer import flow */
+.status-strip{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;background:rgba(255,253,248,.82);border:1px solid var(--line);border-radius:18px;padding:9px 11px;margin:0 0 10px;color:var(--muted);font-size:.78rem;box-shadow:0 6px 16px rgba(65,88,58,.04)}
+.status-strip b{color:var(--brown)}
+.status-strip .mini-btn{padding:6px 10px;font-size:.72rem;border-radius:999px}
+.backup-alert{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;background:#fff7da;border:1px solid #ead99f;color:#6e5520;border-radius:18px;padding:11px 13px;margin:0 0 12px;box-shadow:0 6px 16px rgba(65,88,58,.04)}
+.backup-alert b{font-size:.9rem}.backup-alert span{font-size:.8rem;flex:1;min-width:190px}.backup-alert button{padding:8px 12px;border-radius:999px;font-size:.78rem;background:#8a6a2d}
+@media(max-width:680px){.status-strip{align-items:flex-start;justify-content:flex-start;flex-direction:column}.backup-alert{align-items:flex-start;flex-direction:column}.backup-alert button{width:100%;justify-content:center}}

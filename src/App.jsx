@@ -148,6 +148,23 @@ function normalizeFood(f) {
   }
 }
 
+function formatDateTime(value) {
+  if (!value) return '未保存'
+  const d = new Date(value)
+  if (Number.isNaN(d.getTime())) return '未保存'
+  const m = d.getMonth() + 1
+  const day = d.getDate()
+  const hh = String(d.getHours()).padStart(2, '0')
+  const mm = String(d.getMinutes()).padStart(2, '0')
+  return `${m}/${day} ${hh}:${mm}`
+}
+function isBackupDue(value) {
+  if (!value) return true
+  const t = new Date(value).getTime()
+  if (Number.isNaN(t)) return true
+  return Date.now() - t > 7 * 24 * 60 * 60 * 1000
+}
+
 
 function categoryLabel(cat) {
   return CATEGORY_LABELS[cat] || cat
@@ -187,6 +204,8 @@ export default function App() {
   const [showSplash, setShowSplash] = useState(() => !sessionStorage.getItem('splashDone'))
   const [saveNotice, setSaveNotice] = useState('')
   const [foodNotice, setFoodNotice] = useState('')
+  const [lastSavedAt, setLastSavedAt] = useState(() => localStorage.getItem('lastSavedAt') || '')
+  const [lastBackupAt, setLastBackupAt] = useState(() => localStorage.getItem('lastBackupAt') || '')
   const saveNoticeTimer = useRef(null)
 
   useEffect(() => {
@@ -199,6 +218,9 @@ export default function App() {
   }, [showSplash])
 
   function notifySaved(message = '保存しました') {
+    const now = new Date().toISOString()
+    localStorage.setItem('lastSavedAt', now)
+    setLastSavedAt(now)
     setSaveNotice(message)
     if (saveNoticeTimer.current) clearTimeout(saveNoticeTimer.current)
     saveNoticeTimer.current = setTimeout(() => setSaveNotice(''), 1800)
@@ -321,11 +343,15 @@ export default function App() {
     a.download = 'wangohan_backup.csv'
     a.click()
     URL.revokeObjectURL(url)
+    const now = new Date().toISOString()
+    localStorage.setItem('lastBackupAt', now)
+    setLastBackupAt(now)
+    notifySaved('バックアップを書き出しました')
   }
   function importCSV(e) {
     const file = e.target.files?.[0]
     if (!file) return
-    if (!confirm('現在の食材データとメモを上書きします。よろしいですか？')) { e.target.value = ''; return }
+    if (!confirm('現在の食材データとメモを上書きします。先にCSVを書き出しておくと安全です。続けますか？')) { e.target.value = ''; return }
     const reader = new FileReader()
     reader.onload = (ev) => {
       try {
@@ -377,6 +403,17 @@ export default function App() {
         <span>ウリ & ルルの毎日ごはん</span>
       </div>
     </header>
+
+    <div className="status-strip">
+      <span>最終保存：<b>{formatDateTime(lastSavedAt)}</b></span>
+      <span>前回バックアップ：<b>{lastBackupAt ? formatDateTime(lastBackupAt) : '未作成'}</b></span>
+      <button className="sub mini-btn" onClick={exportCSV}>CSVバックアップ</button>
+    </div>
+    {isBackupDue(lastBackupAt) && <div className="backup-alert">
+      <b>バックアップがおすすめです</b>
+      <span>{lastBackupAt ? '前回のCSVバックアップから7日以上経っています。' : 'まだCSVバックアップが作られていません。'}</span>
+      <button onClick={exportCSV}>今すぐ書き出し</button>
+    </div>}
 
     <nav className="nav">
       <TabButton id="meal" active={tab} onClick={setTab}>ごはん</TabButton>
