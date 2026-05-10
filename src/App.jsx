@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 
 const defaultFoods = [
   {name:'豚肉',cat:'タンパク質',uri:'safe',lulu:'safe',detail:'2匹ともOK。ホットクックの主役食材。ヒレ・もも肉など脂身の少ない部位を。必ず加熱。'},
@@ -103,7 +103,7 @@ const LV = {
   l2: { label: 'Lv2', className: 'lv-2', rank: 2 },
   l3: { label: 'Lv3', className: 'lv-3', rank: 3 },
 }
-const CATS = ['タンパク質', '野菜', '炭水化物', '乳製品', '果物', 'その他']
+const CATS = ['タンパク質', '野菜', '穀物', '魚介類', '乳製品', '果物', 'ナッツ・種', 'その他']
 const MEMO_LABELS = { m1: 'ウリのメモ', m2: 'ルルのメモ', m3: '服薬・健康メモ' }
 
 function loadJson(key, fallback) {
@@ -170,6 +170,16 @@ export default function App() {
   const [editIndex, setEditIndex] = useState(null)
   const [draft, setDraft] = useState({ name: '', cat: '野菜', uri: 'safe', lulu: 'safe', detail: '' })
   const [manageQuery, setManageQuery] = useState('')
+  const [showSplash, setShowSplash] = useState(() => !sessionStorage.getItem('splashDone'))
+
+  useEffect(() => {
+    if (!showSplash) return
+    const timer = setTimeout(() => {
+      sessionStorage.setItem('splashDone', '1')
+      setShowSplash(false)
+    }, 950)
+    return () => clearTimeout(timer)
+  }, [showSplash])
 
   function setFoods(next) {
     setFoodsState(next)
@@ -289,12 +299,20 @@ export default function App() {
   }
 
   return <div className="app">
+    {showSplash && <div className="splash" onClick={() => setShowSplash(false)}>
+      <div className="splash-card">
+        <img src="/apple-touch-icon.png" alt="" />
+        <div className="splash-title">わんごはん帳</div>
+        <div className="splash-sub">ウリ & ルルの毎日ごはん</div>
+        <div className="splash-dots"><i></i><i></i><i></i></div>
+      </div>
+    </div>}
     <header className="hero">
       <img src="/apple-touch-icon.png" alt="" />
       <div>
         <p>ウリ & ルル</p>
         <h1>わんごはん帳</h1>
-        <span>JSX版・食材データ連動</span>
+        <span>ウリ & ルルの毎日ごはん</span>
       </div>
     </header>
 
@@ -308,18 +326,41 @@ export default function App() {
 
     <main>
       {tab === 'meal' && <section className="panel">
-        <h2>それぞれの器</h2>
+        <div className="section-head">
+          <h2>それぞれの器</h2>
+          <button className="sub small" onClick={() => document.getElementById('meal-edit')?.scrollIntoView({behavior:'smooth', block:'start'})}>ごはんの設定を変更</button>
+        </div>
         <div className="meal-grid">
           <DogMeal title="ウリ" foodAmt={mealConfig.uriFoodAmt} rice={mealConfig.uriRiceAmt} hot={mealConfig.uriHotcookNote} items={mealConfig.uriItems} />
           <DogMeal title="ルル" foodAmt={mealConfig.luluFoodAmt} rice={mealConfig.luluRice} hot={mealConfig.luluHotcookNote} items={mealConfig.luluItems} />
         </div>
-        <div className="card">
+        <div className="card cook-card">
           <h3>ホットクック共通おかず</h3>
           <TagList items={mealConfig.hotcookOk} />
           <h3>共通NG</h3>
           <TagList items={mealConfig.hotcookNg} tone="ng" />
         </div>
-        <details className="edit-box">
+        <div className="split-grid">
+          <div className="card solo-card uri">
+            <h3>ウリだけ別調理</h3>
+            <TagList items={mealConfig.uriSep} tone="warn" />
+          </div>
+          <div className="card solo-card lulu">
+            <h3>ルルだけ別調理</h3>
+            <TagList items={mealConfig.luluSep} />
+          </div>
+        </div>
+        <div className="tip-dark">
+          <h3>手作りごはんのポイント</h3>
+          <ul>
+            <li>野菜は必ず加熱・細かく切る</li>
+            <li>塩・醤油・香辛料は絶対NG</li>
+            <li>新食材は少量から3日様子見</li>
+            <li>ウリは白米OK、ルルは白米NG</li>
+            <li>メモと食材データは端末内に保存されます</li>
+          </ul>
+        </div>
+        <details className="edit-box" id="meal-edit">
           <summary>ごはん設定を編集</summary>
           <div className="form-grid">
             <label>ウリ フード<input value={mealConfig.uriFoodAmt || ''} onChange={e=>setMealConfig({...mealConfig, uriFoodAmt:e.target.value})} /></label>
@@ -331,6 +372,8 @@ export default function App() {
           <label>ルルの追加項目（名前：メモ で1行ずつ）<textarea value={(mealConfig.luluItems||[]).map(i=>`${i.name}：${i.note||''}`).join('\n')} onChange={e=>updateMealItems('luluItems', e.target.value)} /></label>
           <label>ホットクックOK（1行ずつ）<textarea value={(mealConfig.hotcookOk||[]).join('\n')} onChange={e=>updateMealArray('hotcookOk', e.target.value)} /></label>
           <label>ホットクックNG（1行ずつ）<textarea value={(mealConfig.hotcookNg||[]).join('\n')} onChange={e=>updateMealArray('hotcookNg', e.target.value)} /></label>
+          <label>ウリだけ別調理（1行ずつ）<textarea value={(mealConfig.uriSep||[]).join('\n')} onChange={e=>updateMealArray('uriSep', e.target.value)} /></label>
+          <label>ルルだけ別調理（1行ずつ）<textarea value={(mealConfig.luluSep||[]).join('\n')} onChange={e=>updateMealArray('luluSep', e.target.value)} /></label>
         </details>
       </section>}
 
