@@ -104,6 +104,8 @@ const LV = {
   l3: { label: 'Lv3', className: 'lv-3', rank: 3 },
 }
 const CATS = ['タンパク質', '野菜', '穀物', '魚介類', '乳製品', '果物', 'ナッツ・種', 'その他']
+const QUICK_DEFAULT_ORDER = ['タンパク質', '野菜', '果物', '穀物', '乳製品', '魚介類', 'ナッツ・種', 'その他']
+const CATEGORY_LABELS = { タンパク質: 'お肉・タンパク質' }
 const MEMO_LABELS = { m1: 'ウリのメモ', m2: 'ルルのメモ', m3: '服薬・健康メモ' }
 
 function loadJson(key, fallback) {
@@ -146,6 +148,17 @@ function normalizeFood(f) {
   }
 }
 
+
+function categoryLabel(cat) {
+  return CATEGORY_LABELS[cat] || cat
+}
+function buildCategoryOrder(foods, savedOrder = QUICK_DEFAULT_ORDER) {
+  const cats = [...new Set(foods.map(f => f.cat || 'その他'))]
+  const base = Array.isArray(savedOrder) && savedOrder.length ? savedOrder : QUICK_DEFAULT_ORDER
+  return [...base, ...QUICK_DEFAULT_ORDER, ...cats]
+    .filter((cat, index, arr) => cats.includes(cat) && arr.indexOf(cat) === index)
+}
+
 function Badge({ value }) {
   const item = LV[value] || LV.safe
   return <span className={`lv ${item.className}`}>{item.label}</span>
@@ -170,6 +183,7 @@ export default function App() {
   const [editIndex, setEditIndex] = useState(null)
   const [draft, setDraft] = useState({ name: '', cat: '野菜', uri: 'safe', lulu: 'safe', detail: '' })
   const [manageQuery, setManageQuery] = useState('')
+  const [quickCatOrder, setQuickCatOrderState] = useState(() => loadJson('quickCategoryOrder', QUICK_DEFAULT_ORDER))
   const [showSplash, setShowSplash] = useState(() => !sessionStorage.getItem('splashDone'))
   const [saveNotice, setSaveNotice] = useState('')
   const [foodNotice, setFoodNotice] = useState('')
@@ -206,6 +220,23 @@ export default function App() {
     notifySaved('メモを保存しました')
   }
 
+  function setQuickCatOrder(next) {
+    setQuickCatOrderState(next)
+    saveJson('quickCategoryOrder', next)
+    notifySaved('早見表の並び順を保存しました')
+  }
+  function moveQuickCategory(cat, direction) {
+    const order = [...quickCategoryOrder]
+    const index = order.indexOf(cat)
+    const nextIndex = index + direction
+    if (index < 0 || nextIndex < 0 || nextIndex >= order.length) return
+    ;[order[index], order[nextIndex]] = [order[nextIndex], order[index]]
+    setQuickCatOrder(order)
+  }
+  function resetQuickCategoryOrder() {
+    setQuickCatOrder(QUICK_DEFAULT_ORDER)
+  }
+
   const filteredFoods = useMemo(() => {
     return foods.filter((f) => {
       const q = query.trim().toLowerCase()
@@ -217,11 +248,14 @@ export default function App() {
     })
   }, [foods, query, filter, dog])
 
-  const quickFoods = useMemo(() => foods.slice().sort((a, b) => {
-    const ar = Math.max(LV[a.uri]?.rank ?? 0, LV[a.lulu]?.rank ?? 0)
-    const br = Math.max(LV[b.uri]?.rank ?? 0, LV[b.lulu]?.rank ?? 0)
-    return br - ar || a.cat.localeCompare(b.cat, 'ja') || a.name.localeCompare(b.name, 'ja')
-  }), [foods])
+  const quickCategoryOrder = useMemo(() => buildCategoryOrder(foods, quickCatOrder), [foods, quickCatOrder])
+
+  const quickGroups = useMemo(() => quickCategoryOrder
+    .map(cat => ({
+      cat,
+      items: foods.filter(f => f.cat === cat).sort((a, b) => a.name.localeCompare(b.name, 'ja'))
+    }))
+    .filter(group => group.items.length), [foods, quickCategoryOrder])
 
   const groupedManageFoods = useMemo(() => {
     const q = manageQuery.trim().toLowerCase()
@@ -408,8 +442,22 @@ export default function App() {
 
       {tab === 'quick' && <section className="panel">
         <h2>食材レベル早見表</h2>
-        <p className="note">管理画面の食材データから自動で作っています。管理で変更するとここも更新されます。</p>
-        <FoodTable foods={quickFoods} />
+        <p className="note">よく使う分類が上に来るようにしました。並び順は下のボタンで変更できます。</p>
+        <details className="sort-box">
+          <summary>早見表の並び順を編集</summary>
+          <p className="save-help">お肉・野菜・果物を先頭にしています。よく使う分類は「上へ」で移動できます。</p>
+          <div className="sort-list">
+            {quickCategoryOrder.map((cat, index) => <div className="sort-row" key={cat}>
+              <b>{index + 1}. {categoryLabel(cat)}</b>
+              <div>
+                <button className="sub mini-btn" disabled={index === 0} onClick={()=>moveQuickCategory(cat, -1)}>上へ</button>
+                <button className="sub mini-btn" disabled={index === quickCategoryOrder.length - 1} onClick={()=>moveQuickCategory(cat, 1)}>下へ</button>
+              </div>
+            </div>)}
+          </div>
+          <button className="sub" onClick={resetQuickCategoryOrder}>おすすめ順に戻す</button>
+        </details>
+        <FoodTable groups={quickGroups} />
       </section>}
 
       {tab === 'foods' && <section className="panel">
@@ -479,9 +527,8 @@ function DogMeal({ title, foodAmt, rice, hot, items = [] }) {
 function TagList({ items = [], tone = '' }) {
   return <div className="tags">{items.map((item, i) => <span key={i} className={`tag ${tone}`}>{item}</span>)}</div>
 }
-function FoodTable({ foods }) {
-  const cats = [...new Set(foods.map(f => f.cat))]
-  return <div>{cats.map(cat => <div className="table-block" key={cat}><h3>{cat}</h3><table><thead><tr><th>食材</th><th>ウリ</th><th>ルル</th></tr></thead><tbody>{foods.filter(f=>f.cat===cat).map(f => <tr key={f.name}><td>{f.name}</td><td><Badge value={f.uri} /></td><td><Badge value={f.lulu} /></td></tr>)}</tbody></table></div>)}</div>
+function FoodTable({ groups }) {
+  return <div>{groups.map(group => <div className="table-block" key={group.cat}><h3>{categoryLabel(group.cat)}</h3><table><thead><tr><th>食材</th><th>ウリ</th><th>ルル</th></tr></thead><tbody>{group.items.map(f => <tr key={f.name}><td>{f.name}</td><td><Badge value={f.uri} /></td><td><Badge value={f.lulu} /></td></tr>)}</tbody></table></div>)}</div>
 }
 function FoodCards({ foods }) {
   if (!foods.length) return <p className="empty">該当する食材が見つかりません</p>
