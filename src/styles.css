@@ -450,3 +450,58 @@
     padding: 4px 7px !important;
   }
 }
+
+/* fixed16: 管理画面の食材リストは、ウリ/ルルではなくレベルバッジだけをはっきり色分け */
+.manage-badges .dog-level {
+  background: #fffdf8 !important;
+  border: 1px solid rgba(222,215,199,.9) !important;
+  color: var(--brown) !important;
+}
+.manage-badges .dog-level .lv {
+  min-width: 44px !important;
+  padding: 5px 9px !important;
+  border-radius: 999px !important;
+  font-weight: 900 !important;
+  text-align: center !important;
+  box-shadow: none !important;
+}
+.manage-badges .dog-level .lv.lv-ok {
+  background: #dfeedd !important;
+  color: #38633d !important;
+  border: 1px solid #bdd8ba !important;
+}
+.manage-badges .dog-level .lv.lv-1 {
+  background: #fff0b8 !important;
+  color: #7a5d00 !important;
+  border: 1px solid #e3c75d !important;
+}
+.manage-badges .dog-level .lv.lv-2 {
+  background: #ffdcb5 !important;
+  color: #8a4d13 !important;
+  border: 1px solid #e5ad70 !important;
+}
+.manage-badges .dog-level .lv.lv-3 {
+  background: #ffd1cc !important;
+  color: #963c34 !important;
+  border: 1px solid #e79a92 !important;
+}
+.manage-level-legend .lv.lv-ok {
+  background: #dfeedd !important;
+  color: #38633d !important;
+  border: 1px solid #bdd8ba !important;
+}
+.manage-level-legend .lv.lv-1 {
+  background: #fff0b8 !important;
+  color: #7a5d00 !important;
+  border: 1px solid #e3c75d !important;
+}
+.manage-level-legend .lv.lv-2 {
+  background: #ffdcb5 !important;
+  color: #8a4d13 !important;
+  border: 1px solid #e5ad70 !important;
+}
+.manage-level-legend .lv.lv-3 {
+  background: #ffd1cc !important;
+  color: #963c34 !important;
+  border: 1px solid #e79a92 !important;
+}
