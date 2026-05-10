@@ -14,3 +14,8 @@
 .manage-row{grid-template-columns:1.2fr .8fr 70px 70px 70px 70px}
 .manage-row .mini{justify-content:center;padding:8px 10px;font-size:.78rem}
 @media(max-width:680px){.manage-row{grid-template-columns:1fr auto auto auto auto}.save-toast{width:calc(100% - 36px);text-align:center}}
+
+/* 食材管理：分類ごとのグループ表示 */
+.food-notice{margin:12px 0;background:#f1f8ef;border:1px solid #d9ead3;color:#426642;border-radius:16px;padding:11px 13px;font-weight:900;font-size:.86rem}
+.manage-groups{display:grid;gap:14px}.manage-group{background:rgba(255,255,255,.78);border:1px solid var(--line);border-radius:18px;overflow:hidden;box-shadow:0 6px 16px rgba(65,88,58,.05)}.manage-group>h3{display:flex;align-items:center;justify-content:space-between;background:linear-gradient(135deg,var(--brown),#a37d55);color:white;margin:0;padding:11px 14px}.manage-group>h3 span{font-size:.74rem;background:rgba(255,255,255,.2);border-radius:999px;padding:3px 9px}.manage-group .manage-list{padding:9px;gap:7px}.manage-row{grid-template-columns:1.2fr 1.2fr 70px 70px}.manage-badges{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.manage-badges span{display:inline-flex;align-items:center;gap:4px;color:var(--muted);font-size:.78rem;font-weight:800}
+@media(max-width:680px){.manage-row{grid-template-columns:1fr auto auto}.manage-badges{grid-column:1 / -1;order:2}.manage-row button{order:1}.manage-row b{order:0}.manage-group>h3{padding:10px 12px}}

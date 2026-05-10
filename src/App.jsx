@@ -172,6 +172,7 @@ export default function App() {
   const [manageQuery, setManageQuery] = useState('')
   const [showSplash, setShowSplash] = useState(() => !sessionStorage.getItem('splashDone'))
   const [saveNotice, setSaveNotice] = useState('')
+  const [foodNotice, setFoodNotice] = useState('')
   const saveNoticeTimer = useRef(null)
 
   useEffect(() => {
@@ -222,12 +223,25 @@ export default function App() {
     return br - ar || a.cat.localeCompare(b.cat, 'ja') || a.name.localeCompare(b.name, 'ja')
   }), [foods])
 
+  const groupedManageFoods = useMemo(() => {
+    const q = manageQuery.trim().toLowerCase()
+    const filtered = foods
+      .map((f, i) => [f, i])
+      .filter(([f]) => !q || `${f.name} ${f.cat} ${f.detail || ''}`.toLowerCase().includes(q))
+    const cats = [...CATS, ...new Set(filtered.map(([f]) => f.cat).filter(cat => !CATS.includes(cat)))]
+    return cats
+      .map(cat => ({ cat, items: filtered.filter(([f]) => f.cat === cat).sort(([a], [b]) => a.name.localeCompare(b.name, 'ja')) }))
+      .filter(group => group.items.length)
+  }, [foods, manageQuery])
+
   function startAdd() {
+    setFoodNotice('')
     setEditIndex(null)
     setDraft({ name: '', cat: '野菜', uri: 'safe', lulu: 'safe', detail: '' })
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
   function startEdit(index) {
+    setFoodNotice('')
     setEditIndex(index)
     setDraft({ ...foods[index] })
     window.scrollTo({ top: 0, behavior: 'smooth' })
@@ -236,9 +250,11 @@ export default function App() {
     if (!draft.name.trim()) { alert('食材名を入れてください'); return }
     const item = normalizeFood(draft)
     const next = [...foods]
-    if (editIndex === null) next.push(item)
+    const isNew = editIndex === null
+    if (isNew) next.push(item)
     else next[editIndex] = item
     setFoods(next)
+    setFoodNotice(`「${item.name}」を「${item.cat}」に${isNew ? '登録' : '保存'}しました`)
     setEditIndex(null)
     setDraft({ name: '', cat: '野菜', uri: 'safe', lulu: 'safe', detail: '' })
   }
@@ -430,9 +446,21 @@ export default function App() {
           <label>詳細<textarea value={draft.detail} onChange={e=>setDraft({...draft, detail:e.target.value})} /></label>
           <div className="button-row"><button onClick={saveFood}>保存</button><button className="sub" onClick={startAdd}>入力をリセット</button>{editIndex !== null && <button className="danger" onClick={()=>deleteFood(editIndex)}>この食材を削除</button>}</div>
         </div>
-        <input className="search" placeholder="管理リスト検索" value={manageQuery} onChange={e=>setManageQuery(e.target.value)} />
-        <div className="manage-list">
-          {foods.map((f, i) => [f, i]).filter(([f]) => !manageQuery || `${f.name} ${f.cat}`.includes(manageQuery)).map(([f, i]) => <div className="manage-row" key={`${f.name}-${i}`}><b>{f.name}</b><span>{f.cat}</span><Badge value={f.uri} /><Badge value={f.lulu} /><button onClick={()=>startEdit(i)}>編集</button><button className="danger mini" onClick={()=>deleteFood(i)}>削除</button></div>)}
+        {foodNotice && <div className="food-notice">{foodNotice}</div>}
+        <input className="search" placeholder="管理リスト検索（食材名・分類・詳細）" value={manageQuery} onChange={e=>setManageQuery(e.target.value)} />
+        <div className="manage-groups">
+          {groupedManageFoods.length === 0 && <p className="empty">該当する食材が見つかりません</p>}
+          {groupedManageFoods.map(group => <section className="manage-group" key={group.cat}>
+            <h3>{group.cat}<span>{group.items.length}件</span></h3>
+            <div className="manage-list">
+              {group.items.map(([f, i]) => <div className="manage-row" key={`${f.name}-${i}`}>
+                <b>{f.name}</b>
+                <div className="manage-badges"><span>ウリ <Badge value={f.uri} /></span><span>ルル <Badge value={f.lulu} /></span></div>
+                <button onClick={()=>startEdit(i)}>編集</button>
+                <button className="danger mini" onClick={()=>deleteFood(i)}>削除</button>
+              </div>)}
+            </div>
+          </section>)}
         </div>
       </section>}
     </main>
