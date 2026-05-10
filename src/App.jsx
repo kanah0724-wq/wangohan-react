@@ -146,6 +146,7 @@ function normalizeFood(f) {
     lulu: f.lulu || 'safe',
     detail: f.detail || '',
     favorite: Boolean(f.favorite),
+    hidden: Boolean(f.hidden),
   }
 }
 
@@ -222,8 +223,10 @@ export default function App() {
   const [condition, setCondition] = useState('all')
   const [quickCondition, setQuickCondition] = useState('all')
   const [editIndex, setEditIndex] = useState(null)
-  const [draft, setDraft] = useState({ name: '', cat: '野菜', uri: 'safe', lulu: 'safe', detail: '' })
+  const [draft, setDraft] = useState({ name: '', cat: '野菜', uri: 'safe', lulu: 'safe', detail: '', hidden: false })
   const [manageQuery, setManageQuery] = useState('')
+  const [manageView, setManageView] = useState(() => localStorage.getItem('manageView') || 'card')
+  const [manageVisibility, setManageVisibility] = useState('active')
   const [quickCatOrder, setQuickCatOrderState] = useState(() => loadJson('quickCategoryOrder', QUICK_DEFAULT_ORDER))
   const [showSplash, setShowSplash] = useState(() => !sessionStorage.getItem('splashDone'))
   const [saveNotice, setSaveNotice] = useState('')
@@ -289,8 +292,24 @@ export default function App() {
     setFoodNotice(`「${name}」を${item?.favorite ? 'よく使うに追加' : 'よく使うから外し'}ました`)
   }
 
+  function setManageViewSaved(value) {
+    setManageView(value)
+    localStorage.setItem('manageView', value)
+  }
+  function toggleHidden(index) {
+    const item = foods[index]
+    if (!item) return
+    const nextHidden = !item.hidden
+    if (nextHidden && !confirm(`「${item.name}」を非表示にしますか？一覧や早見表には出なくなります。`)) return
+    const next = foods.map((f, i) => i === index ? { ...f, hidden: nextHidden } : f)
+    setFoods(next)
+    setFoodNotice(`「${item.name}」を${nextHidden ? '非表示' : '表示'}にしました`)
+    if (editIndex === index) setEditIndex(null)
+  }
+
   const filteredFoods = useMemo(() => {
     return foods.filter((f) => {
+      if (f.hidden) return false
       const q = query.trim().toLowerCase()
       if (q && !`${f.name} ${f.cat} ${f.detail}`.toLowerCase().includes(q)) return false
       if (!matchesFoodCondition(f, condition)) return false
@@ -306,7 +325,7 @@ export default function App() {
   const quickGroups = useMemo(() => quickCategoryOrder
     .map(cat => ({
       cat,
-      items: foods.filter(f => f.cat === cat && matchesFoodCondition(f, quickCondition)).sort(sortFavoriteFirst)
+      items: foods.filter(f => !f.hidden && f.cat === cat && matchesFoodCondition(f, quickCondition)).sort(sortFavoriteFirst)
     }))
     .filter(group => group.items.length), [foods, quickCategoryOrder, quickCondition])
 
@@ -314,17 +333,18 @@ export default function App() {
     const q = manageQuery.trim().toLowerCase()
     const filtered = foods
       .map((f, i) => [f, i])
+      .filter(([f]) => manageVisibility === 'hidden' ? f.hidden : !f.hidden)
       .filter(([f]) => !q || `${f.name} ${f.cat} ${f.detail || ''}`.toLowerCase().includes(q))
     const cats = [...CATS, ...new Set(filtered.map(([f]) => f.cat).filter(cat => !CATS.includes(cat)))]
     return cats
       .map(cat => ({ cat, items: filtered.filter(([f]) => f.cat === cat).sort(([a], [b]) => sortFavoriteFirst(a, b)) }))
       .filter(group => group.items.length)
-  }, [foods, manageQuery])
+  }, [foods, manageQuery, manageVisibility])
 
   function startAdd() {
     setFoodNotice('')
     setEditIndex(null)
-    setDraft({ name: '', cat: '野菜', uri: 'safe', lulu: 'safe', detail: '' })
+    setDraft({ name: '', cat: '野菜', uri: 'safe', lulu: 'safe', detail: '', hidden: false })
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
   function startEdit(index) {
@@ -343,7 +363,7 @@ export default function App() {
     setFoods(next)
     setFoodNotice(`「${item.name}」を「${item.cat}」に${isNew ? '登録' : '保存'}しました`)
     setEditIndex(null)
-    setDraft({ name: '', cat: '野菜', uri: 'safe', lulu: 'safe', detail: '' })
+    setDraft({ name: '', cat: '野菜', uri: 'safe', lulu: 'safe', detail: '', hidden: false })
   }
   function deleteFood(index) {
     if (!confirm('この食材を削除しますか？')) return
@@ -366,7 +386,7 @@ export default function App() {
     rows.push('# わんごはん帳バックアップ')
     rows.push('# 旧HTML版と互換性があるCSVです')
     for (const key of ['m1', 'm2', 'm3']) rows.push(['MEMO', MEMO_LABELS[key], memos[key] || ''].map(csvCell).join(','))
-    foods.forEach(f => rows.push(['FOOD', f.name, f.cat, f.uri, f.lulu, f.detail || '', f.favorite ? '1' : ''].map(csvCell).join(',')))
+    foods.forEach(f => rows.push(['FOOD', f.name, f.cat, f.uri, f.lulu, f.detail || '', f.favorite ? '1' : '', f.hidden ? '1' : ''].map(csvCell).join(',')))
     const blob = new Blob(['﻿' + rows.join('\n')], { type: 'text/csv;charset=utf-8' })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
@@ -400,7 +420,7 @@ export default function App() {
             const key = memoMap[cells[1]]
             if (key) nextMemos[key] = cells[2]
           } else if (cells[0] === 'FOOD' && cells.length >= 5) {
-            newFoods.push(normalizeFood({ name: cells[1], cat: cells[2], uri: cells[3], lulu: cells[4], detail: cells[5] || '', favorite: cells[6] === '1' || cells[6] === 'true' }))
+            newFoods.push(normalizeFood({ name: cells[1], cat: cells[2], uri: cells[3], lulu: cells[4], detail: cells[5] || '', favorite: cells[6] === '1' || cells[6] === 'true', hidden: cells[7] === '1' || cells[7] === 'true' }))
           }
         }
         setMemosState(nextMemos)
@@ -584,23 +604,40 @@ export default function App() {
         </div>
         {foodNotice && <div className="food-notice">{foodNotice}</div>}
         <input className="search" placeholder="管理リスト検索（食材名・分類・詳細）" value={manageQuery} onChange={e=>setManageQuery(e.target.value)} />
+        <div className="manage-section-tools">
+          <div className="segmented">
+            <button className={manageVisibility === 'active' ? 'active' : ''} onClick={()=>setManageVisibility('active')}>表示中</button>
+            <button className={manageVisibility === 'hidden' ? 'active' : ''} onClick={()=>setManageVisibility('hidden')}>非表示</button>
+          </div>
+          <div className="segmented">
+            <button className={manageView === 'card' ? 'active' : ''} onClick={()=>setManageViewSaved('card')}>カード</button>
+            <button className={manageView === 'list' ? 'active' : ''} onClick={()=>setManageViewSaved('list')}>一覧</button>
+          </div>
+        </div>
         <div className="level-legend manage-level-legend">
           <span><Badge value="safe" /> 安全</span>
           <span><Badge value="l1" /> 少量・様子見</span>
           <span><Badge value="l2" /> 要注意</span>
           <span><Badge value="l3" /> NG</span>
         </div>
-        <div className="manage-groups">
+        <div className={`manage-groups ${manageView === 'list' ? 'list-mode' : 'card-mode'}`}>
           {groupedManageFoods.length === 0 && <p className="empty">該当する食材が見つかりません</p>}
           {groupedManageFoods.map(group => <section className="manage-group" key={group.cat}>
             <h3>{group.cat}<span>{group.items.length}件</span></h3>
-            <div className="manage-list">
-              {group.items.map(([f, i]) => <div className="manage-row" key={`${f.name}-${i}`}>
-                <div className="manage-name"><FavoriteButton active={f.favorite} onClick={()=>toggleFavorite(f.name)} /><b>{f.name}</b></div>
+            {manageView === 'card' ? <div className="manage-list">
+              {group.items.map(([f, i]) => <div className={`manage-row ${f.hidden ? 'is-hidden' : ''}`} key={`${f.name}-${i}`}>
+                <div className="manage-name"><FavoriteButton active={f.favorite} onClick={()=>toggleFavorite(f.name)} /><b>{f.name}</b>{f.hidden && <small>非表示</small>}</div>
                 <div className="manage-badges"><span className="dog-level"><em>ウリ</em><Badge value={f.uri} /></span><span className="dog-level"><em>ルル</em><Badge value={f.lulu} /></span></div>
-                <div className="manage-actions"><button className="edit-mini" onClick={()=>startEdit(i)}>編集</button><button className="danger mini" onClick={()=>deleteFood(i)}>削除</button></div>
+                <div className="manage-actions"><button className="edit-mini" onClick={()=>startEdit(i)}>編集</button><button className="hide-mini" onClick={()=>toggleHidden(i)}>{f.hidden ? '戻す' : '非表示'}</button><button className="danger mini" onClick={()=>deleteFood(i)}>削除</button></div>
               </div>)}
-            </div>
+            </div> : <div className="manage-table-wrap"><table className="manage-table"><thead><tr><th>食材</th><th>ウリ</th><th>ルル</th><th>操作</th></tr></thead><tbody>
+              {group.items.map(([f, i]) => <tr key={`${f.name}-${i}`} className={f.hidden ? 'is-hidden' : ''}>
+                <td><div className="food-name-line"><FavoriteButton active={f.favorite} onClick={()=>toggleFavorite(f.name)} /> <b>{f.name}</b>{f.hidden && <small>非表示</small>}</div></td>
+                <td><Badge value={f.uri} /></td>
+                <td><Badge value={f.lulu} /></td>
+                <td><div className="table-actions"><button className="edit-mini" onClick={()=>startEdit(i)}>編集</button><button className="hide-mini" onClick={()=>toggleHidden(i)}>{f.hidden ? '戻す' : '非表示'}</button><button className="danger mini" onClick={()=>deleteFood(i)}>削除</button></div></td>
+              </tr>)}
+            </tbody></table></div>}
           </section>)}
         </div>
       </section>}

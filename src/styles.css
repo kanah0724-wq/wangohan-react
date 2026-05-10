@@ -505,3 +505,112 @@
   color: #963c34 !important;
   border: 1px solid #e79a92 !important;
 }
+
+/* fixed17: hide foods + management view switch */
+.manage-section-tools{
+  display:flex;
+  justify-content:space-between;
+  gap:10px;
+  flex-wrap:wrap;
+  margin:2px 0 12px;
+}
+.segmented{
+  display:inline-flex;
+  gap:3px;
+  padding:4px;
+  border:1px solid var(--line);
+  border-radius:999px;
+  background:rgba(255,255,255,.82);
+}
+.segmented button{
+  min-width:72px;
+  justify-content:center;
+  padding:7px 11px;
+  border-radius:999px;
+  background:transparent;
+  color:var(--muted);
+  font-size:.78rem;
+  box-shadow:none;
+}
+.segmented button.active{
+  background:var(--green);
+  color:white;
+}
+.manage-name small,
+.food-name-line small{
+  margin-left:8px;
+  padding:2px 7px;
+  border-radius:999px;
+  background:#eee8dc;
+  color:var(--brown);
+  font-size:.68rem;
+  font-weight:800;
+  white-space:nowrap;
+}
+.manage-actions,
+.table-actions{
+  display:flex;
+  justify-content:flex-end;
+  gap:6px;
+  flex-wrap:wrap;
+}
+.manage-row .hide-mini,
+.manage-table .hide-mini{
+  background:#eee8dc;
+  color:var(--brown);
+}
+.manage-row.is-hidden,
+.manage-table tr.is-hidden{
+  opacity:.72;
+}
+.manage-table-wrap{
+  overflow-x:auto;
+  padding:9px;
+}
+.manage-table{
+  box-shadow:none;
+  border:1px solid var(--line);
+  border-radius:14px;
+  overflow:hidden;
+}
+.manage-table th,
+.manage-table td{
+  vertical-align:middle;
+  padding:9px 10px;
+}
+.manage-table th:nth-child(2),
+.manage-table th:nth-child(3),
+.manage-table td:nth-child(2),
+.manage-table td:nth-child(3){
+  text-align:center;
+  width:84px;
+}
+.manage-table th:last-child,
+.manage-table td:last-child{
+  text-align:right;
+  min-width:178px;
+}
+.manage-table .food-name-line{
+  display:flex;
+  align-items:center;
+  gap:6px;
+}
+.manage-table .star-btn{
+  flex:0 0 auto;
+  width:28px!important;
+  height:28px!important;
+  font-size:15px!important;
+}
+.manage-table button{
+  padding:6px 9px;
+  font-size:.74rem;
+}
+@media(max-width:680px){
+  .manage-section-tools{justify-content:flex-start;}
+  .segmented{width:100%;}
+  .segmented button{flex:1;min-width:0;}
+  .manage-table-wrap{padding:7px;}
+  .manage-table th:last-child,
+  .manage-table td:last-child{min-width:150px;}
+  .table-actions{justify-content:flex-start;}
+}
