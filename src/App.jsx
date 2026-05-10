@@ -145,6 +145,7 @@ function normalizeFood(f) {
     uri: f.uri || 'safe',
     lulu: f.lulu || 'safe',
     detail: f.detail || '',
+    favorite: Boolean(f.favorite),
   }
 }
 
@@ -176,6 +177,27 @@ function buildCategoryOrder(foods, savedOrder = QUICK_DEFAULT_ORDER) {
     .filter((cat, index, arr) => cats.includes(cat) && arr.indexOf(cat) === index)
 }
 
+
+function matchesFoodCondition(f, mode) {
+  if (mode === 'all') return true
+  if (mode === 'favorite') return Boolean(f.favorite)
+  if (mode === 'bothSafe') return f.uri === 'safe' && f.lulu === 'safe'
+  if (mode === 'uriSafe') return f.uri === 'safe'
+  if (mode === 'luluSafe') return f.lulu === 'safe'
+  if (mode === 'anyNg') return f.uri === 'l3' || f.lulu === 'l3'
+  if (mode === 'lv2plus') return (LV[f.uri]?.rank || 0) >= 2 || (LV[f.lulu]?.rank || 0) >= 2
+  if (mode === 'uriNg') return f.uri === 'l3'
+  if (mode === 'luluNg') return f.lulu === 'l3'
+  return true
+}
+function sortFavoriteFirst(a, b) {
+  if (Boolean(a.favorite) !== Boolean(b.favorite)) return a.favorite ? -1 : 1
+  return a.name.localeCompare(b.name, 'ja')
+}
+function FavoriteButton({ active, onClick }) {
+  return <button className={`star-btn ${active ? 'active' : ''}`} onClick={onClick} title={active ? 'よく使うから外す' : 'よく使うに追加'}>{active ? '★' : '☆'}</button>
+}
+
 function Badge({ value }) {
   const item = LV[value] || LV.safe
   return <span className={`lv ${item.className}`}>{item.label}</span>
@@ -197,6 +219,8 @@ export default function App() {
   const [query, setQuery] = useState('')
   const [filter, setFilter] = useState('all')
   const [dog, setDog] = useState('both')
+  const [condition, setCondition] = useState('all')
+  const [quickCondition, setQuickCondition] = useState('all')
   const [editIndex, setEditIndex] = useState(null)
   const [draft, setDraft] = useState({ name: '', cat: '野菜', uri: 'safe', lulu: 'safe', detail: '' })
   const [manageQuery, setManageQuery] = useState('')
@@ -258,26 +282,33 @@ export default function App() {
   function resetQuickCategoryOrder() {
     setQuickCatOrder(QUICK_DEFAULT_ORDER)
   }
+  function toggleFavorite(name) {
+    const next = foods.map((f) => f.name === name ? { ...f, favorite: !f.favorite } : f)
+    setFoods(next)
+    const item = next.find(f => f.name === name)
+    setFoodNotice(`「${name}」を${item?.favorite ? 'よく使うに追加' : 'よく使うから外し'}ました`)
+  }
 
   const filteredFoods = useMemo(() => {
     return foods.filter((f) => {
       const q = query.trim().toLowerCase()
       if (q && !`${f.name} ${f.cat} ${f.detail}`.toLowerCase().includes(q)) return false
+      if (!matchesFoodCondition(f, condition)) return false
       if (filter === 'all') return true
       if (dog === 'uri') return f.uri === filter
       if (dog === 'lulu') return f.lulu === filter
       return f.uri === filter || f.lulu === filter
-    })
-  }, [foods, query, filter, dog])
+    }).sort(sortFavoriteFirst)
+  }, [foods, query, filter, dog, condition])
 
   const quickCategoryOrder = useMemo(() => buildCategoryOrder(foods, quickCatOrder), [foods, quickCatOrder])
 
   const quickGroups = useMemo(() => quickCategoryOrder
     .map(cat => ({
       cat,
-      items: foods.filter(f => f.cat === cat).sort((a, b) => a.name.localeCompare(b.name, 'ja'))
+      items: foods.filter(f => f.cat === cat && matchesFoodCondition(f, quickCondition)).sort(sortFavoriteFirst)
     }))
-    .filter(group => group.items.length), [foods, quickCategoryOrder])
+    .filter(group => group.items.length), [foods, quickCategoryOrder, quickCondition])
 
   const groupedManageFoods = useMemo(() => {
     const q = manageQuery.trim().toLowerCase()
@@ -286,7 +317,7 @@ export default function App() {
       .filter(([f]) => !q || `${f.name} ${f.cat} ${f.detail || ''}`.toLowerCase().includes(q))
     const cats = [...CATS, ...new Set(filtered.map(([f]) => f.cat).filter(cat => !CATS.includes(cat)))]
     return cats
-      .map(cat => ({ cat, items: filtered.filter(([f]) => f.cat === cat).sort(([a], [b]) => a.name.localeCompare(b.name, 'ja')) }))
+      .map(cat => ({ cat, items: filtered.filter(([f]) => f.cat === cat).sort(([a], [b]) => sortFavoriteFirst(a, b)) }))
       .filter(group => group.items.length)
   }, [foods, manageQuery])
 
@@ -335,7 +366,7 @@ export default function App() {
     rows.push('# わんごはん帳バックアップ')
     rows.push('# 旧HTML版と互換性があるCSVです')
     for (const key of ['m1', 'm2', 'm3']) rows.push(['MEMO', MEMO_LABELS[key], memos[key] || ''].map(csvCell).join(','))
-    foods.forEach(f => rows.push(['FOOD', f.name, f.cat, f.uri, f.lulu, f.detail || ''].map(csvCell).join(',')))
+    foods.forEach(f => rows.push(['FOOD', f.name, f.cat, f.uri, f.lulu, f.detail || '', f.favorite ? '1' : ''].map(csvCell).join(',')))
     const blob = new Blob(['﻿' + rows.join('\n')], { type: 'text/csv;charset=utf-8' })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
@@ -369,7 +400,7 @@ export default function App() {
             const key = memoMap[cells[1]]
             if (key) nextMemos[key] = cells[2]
           } else if (cells[0] === 'FOOD' && cells.length >= 5) {
-            newFoods.push(normalizeFood({ name: cells[1], cat: cells[2], uri: cells[3], lulu: cells[4], detail: cells[5] || '' }))
+            newFoods.push(normalizeFood({ name: cells[1], cat: cells[2], uri: cells[3], lulu: cells[4], detail: cells[5] || '', favorite: cells[6] === '1' || cells[6] === 'true' }))
           }
         }
         setMemosState(nextMemos)
@@ -479,7 +510,18 @@ export default function App() {
 
       {tab === 'quick' && <section className="panel">
         <h2>食材レベル早見表</h2>
-        <p className="note">よく使う分類が上に来るようにしました。並び順は下のボタンで変更できます。</p>
+        <p className="note">★を付けた「よく使う食材」は各分類の上に表示されます。</p>
+        <div className="controls compact">
+          <select value={quickCondition} onChange={e=>setQuickCondition(e.target.value)}>
+            <option value="all">すべて表示</option>
+            <option value="favorite">★よく使うだけ</option>
+            <option value="bothSafe">2匹ともOK</option>
+            <option value="uriSafe">ウリOK</option>
+            <option value="luluSafe">ルルOK</option>
+            <option value="anyNg">どちらかLv3/NG</option>
+            <option value="lv2plus">Lv2以上あり</option>
+          </select>
+        </div>
         <details className="sort-box">
           <summary>早見表の並び順を編集</summary>
           <p className="save-help">お肉・野菜・果物を先頭にしています。よく使う分類は「上へ」で移動できます。</p>
@@ -494,17 +536,26 @@ export default function App() {
           </div>
           <button className="sub" onClick={resetQuickCategoryOrder}>おすすめ順に戻す</button>
         </details>
-        <FoodTable groups={quickGroups} />
+        <FoodTable groups={quickGroups} onToggleFavorite={toggleFavorite} />
       </section>}
 
       {tab === 'foods' && <section className="panel">
         <h2>食材詳細</h2>
         <div className="controls">
           <input className="search" placeholder="食材名・カテゴリ・詳細で検索" value={query} onChange={e=>setQuery(e.target.value)} />
+          <select value={condition} onChange={e=>setCondition(e.target.value)}>
+            <option value="all">便利フィルターなし</option>
+            <option value="favorite">★よく使うだけ</option>
+            <option value="bothSafe">2匹ともOK</option>
+            <option value="uriSafe">ウリOK</option>
+            <option value="luluSafe">ルルOK</option>
+            <option value="anyNg">どちらかLv3/NG</option>
+            <option value="lv2plus">Lv2以上あり</option>
+          </select>
           <select value={dog} onChange={e=>setDog(e.target.value)}><option value="both">どちらか</option><option value="uri">ウリ</option><option value="lulu">ルル</option></select>
           <select value={filter} onChange={e=>setFilter(e.target.value)}><option value="all">全レベル</option><option value="safe">OK</option><option value="l1">Lv1</option><option value="l2">Lv2</option><option value="l3">Lv3</option></select>
         </div>
-        <FoodCards foods={filteredFoods} />
+        <FoodCards foods={filteredFoods} onToggleFavorite={toggleFavorite} />
       </section>}
 
       {tab === 'memo' && <section className="panel">
@@ -539,7 +590,7 @@ export default function App() {
             <h3>{group.cat}<span>{group.items.length}件</span></h3>
             <div className="manage-list">
               {group.items.map(([f, i]) => <div className="manage-row" key={`${f.name}-${i}`}>
-                <b>{f.name}</b>
+                <div className="manage-name"><FavoriteButton active={f.favorite} onClick={()=>toggleFavorite(f.name)} /><b>{f.name}</b></div>
                 <div className="manage-badges"><span>ウリ <Badge value={f.uri} /></span><span>ルル <Badge value={f.lulu} /></span></div>
                 <button onClick={()=>startEdit(i)}>編集</button>
                 <button className="danger mini" onClick={()=>deleteFood(i)}>削除</button>
@@ -577,10 +628,10 @@ function DogMeal({ title, type, foodAmt, rice, hot, items = [] }) {
 function TagList({ items = [], tone = '' }) {
   return <div className="tags">{items.map((item, i) => <span key={i} className={`tag ${tone}`}>{item}</span>)}</div>
 }
-function FoodTable({ groups }) {
-  return <div>{groups.map(group => <div className="table-block" key={group.cat}><h3>{categoryLabel(group.cat)}</h3><table><thead><tr><th>食材</th><th>ウリ</th><th>ルル</th></tr></thead><tbody>{group.items.map(f => <tr key={f.name}><td>{f.name}</td><td><Badge value={f.uri} /></td><td><Badge value={f.lulu} /></td></tr>)}</tbody></table></div>)}</div>
+function FoodTable({ groups, onToggleFavorite }) {
+  return <div>{groups.map(group => <div className="table-block" key={group.cat}><h3>{categoryLabel(group.cat)}</h3><table><thead><tr><th>食材</th><th>ウリ</th><th>ルル</th></tr></thead><tbody>{group.items.map(f => <tr key={f.name}><td><div className="food-name-line"><FavoriteButton active={f.favorite} onClick={()=>onToggleFavorite?.(f.name)} />{f.name}</div></td><td><Badge value={f.uri} /></td><td><Badge value={f.lulu} /></td></tr>)}</tbody></table></div>)}</div>
 }
-function FoodCards({ foods }) {
+function FoodCards({ foods, onToggleFavorite }) {
   if (!foods.length) return <p className="empty">該当する食材が見つかりません</p>
-  return <div className="food-grid">{foods.map(f => <article className="food-card" key={f.name}><div><h3>{f.name}</h3><span>{f.cat}</span></div><div className="badges"><span>ウリ <Badge value={f.uri} /></span><span>ルル <Badge value={f.lulu} /></span></div><p>{f.detail}</p></article>)}</div>
+  return <div className="food-grid">{foods.map(f => <article className="food-card" key={f.name}><div className="food-card-head"><div><h3>{f.name}</h3><span>{f.cat}</span></div><FavoriteButton active={f.favorite} onClick={()=>onToggleFavorite?.(f.name)} /></div><div className="badges"><span>ウリ <Badge value={f.uri} /></span><span>ルル <Badge value={f.lulu} /></span></div><p>{f.detail}</p></article>)}</div>
 }

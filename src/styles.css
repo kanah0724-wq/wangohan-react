@@ -51,3 +51,35 @@
 .backup-alert{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;background:#fff7da;border:1px solid #ead99f;color:#6e5520;border-radius:18px;padding:11px 13px;margin:0 0 12px;box-shadow:0 6px 16px rgba(65,88,58,.04)}
 .backup-alert b{font-size:.9rem}.backup-alert span{font-size:.8rem;flex:1;min-width:190px}.backup-alert button{padding:8px 12px;border-radius:999px;font-size:.78rem;background:#8a6a2d}
 @media(max-width:680px){.status-strip{align-items:flex-start;justify-content:flex-start;flex-direction:column}.backup-alert{align-items:flex-start;flex-direction:column}.backup-alert button{width:100%;justify-content:center}}
+
+.controls.compact { margin: 10px 0 14px; }
+.star-btn {
+  border: 1px solid rgba(120, 75, 35, .18);
+  background: #fffaf2;
+  color: #b58a3d;
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  line-height: 1;
+  padding: 0;
+  box-shadow: 0 4px 12px rgba(80, 44, 20, .06);
+}
+.star-btn.active {
+  background: #fff1bd;
+  border-color: rgba(194, 136, 31, .35);
+  color: #d49414;
+}
+.food-name-line,
+.food-card-head,
+.manage-name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.food-card-head { justify-content: space-between; }
+.food-name-line .star-btn { flex: 0 0 auto; width: 28px; height: 28px; font-size: 15px; }
+.manage-name .star-btn { flex: 0 0 auto; width: 30px; height: 30px; font-size: 16px; }
