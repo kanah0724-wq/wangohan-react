@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
 
 const defaultFoods = [
   {name:'豚肉',cat:'タンパク質',uri:'safe',lulu:'safe',detail:'2匹ともOK。ホットクックの主役食材。ヒレ・もも肉など脂身の少ない部位を。必ず加熱。'},
@@ -171,6 +171,8 @@ export default function App() {
   const [draft, setDraft] = useState({ name: '', cat: '野菜', uri: 'safe', lulu: 'safe', detail: '' })
   const [manageQuery, setManageQuery] = useState('')
   const [showSplash, setShowSplash] = useState(() => !sessionStorage.getItem('splashDone'))
+  const [saveNotice, setSaveNotice] = useState('')
+  const saveNoticeTimer = useRef(null)
 
   useEffect(() => {
     if (!showSplash) return
@@ -181,18 +183,26 @@ export default function App() {
     return () => clearTimeout(timer)
   }, [showSplash])
 
+  function notifySaved(message = '保存しました') {
+    setSaveNotice(message)
+    if (saveNoticeTimer.current) clearTimeout(saveNoticeTimer.current)
+    saveNoticeTimer.current = setTimeout(() => setSaveNotice(''), 1800)
+  }
   function setFoods(next) {
     setFoodsState(next)
     saveJson('customFoods', next)
+    notifySaved('食材データを保存しました')
   }
   function setMealConfig(next) {
     setMealConfigState(next)
     saveJson('mealConfig2', next)
+    notifySaved('ごはん設定を保存しました')
   }
   function setMemo(key, value) {
     const next = { ...memos, [key]: value }
     setMemosState(next)
     localStorage.setItem(key, value)
+    notifySaved('メモを保存しました')
   }
 
   const filteredFoods = useMemo(() => {
@@ -289,6 +299,7 @@ export default function App() {
         setMemosState(nextMemos)
         Object.entries(nextMemos).forEach(([k, v]) => localStorage.setItem(k, v))
         if (newFoods.length) setFoods(newFoods)
+        notifySaved('CSVを読み込みました')
         alert(`読み込み完了！食材${newFoods.length}件・メモを復元しました。`)
       } catch (err) {
         alert('読み込みエラー: ' + err.message)
@@ -299,6 +310,7 @@ export default function App() {
   }
 
   return <div className="app">
+    {saveNotice && <div className="save-toast">{saveNotice}</div>}
     {showSplash && <div className="splash" onClick={() => setShowSplash(false)}>
       <div className="splash-card">
         <img src="/apple-touch-icon.png" alt="" />
@@ -362,6 +374,7 @@ export default function App() {
         </div>
         <details className="edit-box" id="meal-edit">
           <summary>ごはん設定を編集</summary>
+          <p className="save-help">入力すると自動で保存されます。保存されると画面下に『保存しました』が出ます。</p>
           <div className="form-grid">
             <label>ウリ フード<input value={mealConfig.uriFoodAmt || ''} onChange={e=>setMealConfig({...mealConfig, uriFoodAmt:e.target.value})} /></label>
             <label>ウリ 白米<input value={mealConfig.uriRiceAmt || ''} onChange={e=>setMealConfig({...mealConfig, uriRiceAmt:e.target.value})} /></label>
@@ -415,11 +428,11 @@ export default function App() {
             <label>ルル<select value={draft.lulu} onChange={e=>setDraft({...draft, lulu:e.target.value})}>{Object.entries(LV).map(([k,v]) => <option key={k} value={k}>{v.label}</option>)}</select></label>
           </div>
           <label>詳細<textarea value={draft.detail} onChange={e=>setDraft({...draft, detail:e.target.value})} /></label>
-          <div className="button-row"><button onClick={saveFood}>保存</button><button className="sub" onClick={startAdd}>入力をリセット</button>{editIndex !== null && <button className="danger" onClick={()=>deleteFood(editIndex)}>削除</button>}</div>
+          <div className="button-row"><button onClick={saveFood}>保存</button><button className="sub" onClick={startAdd}>入力をリセット</button>{editIndex !== null && <button className="danger" onClick={()=>deleteFood(editIndex)}>この食材を削除</button>}</div>
         </div>
         <input className="search" placeholder="管理リスト検索" value={manageQuery} onChange={e=>setManageQuery(e.target.value)} />
         <div className="manage-list">
-          {foods.map((f, i) => [f, i]).filter(([f]) => !manageQuery || `${f.name} ${f.cat}`.includes(manageQuery)).map(([f, i]) => <div className="manage-row" key={`${f.name}-${i}`}><b>{f.name}</b><span>{f.cat}</span><Badge value={f.uri} /><Badge value={f.lulu} /><button onClick={()=>startEdit(i)}>編集</button></div>)}
+          {foods.map((f, i) => [f, i]).filter(([f]) => !manageQuery || `${f.name} ${f.cat}`.includes(manageQuery)).map(([f, i]) => <div className="manage-row" key={`${f.name}-${i}`}><b>{f.name}</b><span>{f.cat}</span><Badge value={f.uri} /><Badge value={f.lulu} /><button onClick={()=>startEdit(i)}>編集</button><button className="danger mini" onClick={()=>deleteFood(i)}>削除</button></div>)}
         </div>
       </section>}
     </main>
