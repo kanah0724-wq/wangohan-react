@@ -516,16 +516,10 @@ export default function App() {
 }
 
 function DogAvatar({ type }) {
-  const isUri = type === 'uri'
-  return <div className={`dog-avatar ${isUri ? 'uri' : 'lulu'}`} aria-hidden="true">
-    <div className="dog-ear left"></div>
-    <div className="dog-ear right"></div>
-    <div className="dog-face">
-      <span className="eye left"></span>
-      <span className="eye right"></span>
-      <span className="nose"></span>
-      <span className="mouth"></span>
-    </div>
+  const src = type === 'uri' ? '/uri-face.png' : '/lulu-face.png'
+  const alt = type === 'uri' ? 'ウリ' : 'ルル'
+  return <div className={`dog-avatar ${type || ''}`} aria-hidden="true">
+    <img src={src} alt={alt} />
   </div>
 }
 function DogMeal({ title, type, foodAmt, rice, hot, items = [] }) {
@@ -534,7 +528,7 @@ function DogMeal({ title, type, foodAmt, rice, hot, items = [] }) {
       <DogAvatar type={type} />
       <div>
         <h3>{title}</h3>
-        <small>{type === 'uri' ? 'コーギー' : 'ダックス'}</small>
+        <small>{type === 'uri' ? 'ダックス' : 'コーギー'}</small>
       </div>
     </div>
     <div className="meal-line"><span>フード</span><b>{foodAmt}</b></div>
