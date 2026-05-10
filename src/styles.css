@@ -296,3 +296,157 @@
     gap: 6px;
   }
 }
+
+
+/* fixed15: 管理画面をスタイリッシュに整理。色はレベルバッジだけに限定 */
+.manage-level-legend {
+  background: rgba(255,255,255,.72) !important;
+  border: 1px solid rgba(215,207,190,.82) !important;
+  box-shadow: 0 8px 22px rgba(65,88,58,.045) !important;
+}
+.manage-group {
+  background: rgba(255,253,248,.86) !important;
+  border: 1px solid rgba(215,207,190,.75) !important;
+  box-shadow: 0 10px 26px rgba(65,88,58,.055) !important;
+}
+.manage-group > h3 {
+  background: linear-gradient(135deg,#6f563d,#937052) !important;
+  padding: 10px 14px !important;
+  font-size: .9rem !important;
+}
+.manage-group .manage-list {
+  padding: 8px !important;
+  gap: 7px !important;
+}
+.manage-row {
+  grid-template-columns: minmax(180px,1.25fr) minmax(188px,.95fr) auto !important;
+  gap: 10px !important;
+  padding: 9px 10px !important;
+  border-radius: 15px !important;
+  background: rgba(255,255,255,.92) !important;
+  border: 1px solid rgba(222,215,199,.78) !important;
+  box-shadow: 0 3px 10px rgba(65,88,58,.035) !important;
+}
+.manage-name {
+  display: flex !important;
+  align-items: center !important;
+  gap: 7px !important;
+}
+.manage-name b {
+  font-size: .9rem !important;
+  font-weight: 900 !important;
+  color: #2f3c31 !important;
+}
+.manage-badges {
+  display: flex !important;
+  justify-content: flex-start !important;
+  gap: 6px !important;
+  width: auto !important;
+}
+.manage-badges .dog-level,
+.manage-badges .level-card-safe,
+.manage-badges .level-card-l1,
+.manage-badges .level-card-l2,
+.manage-badges .level-card-l3 {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  gap: 6px !important;
+  min-height: 0 !important;
+  width: auto !important;
+  padding: 4px 5px 4px 8px !important;
+  border-radius: 999px !important;
+  background: #f7f4eb !important;
+  border: 1px solid rgba(222,215,199,.9) !important;
+  border-left: 1px solid rgba(222,215,199,.9) !important;
+  color: var(--brown) !important;
+  box-shadow: none !important;
+}
+.manage-badges .dog-level em {
+  font-size: .72rem !important;
+  color: #80684f !important;
+  font-weight: 900 !important;
+}
+.manage-badges .dog-level .lv {
+  min-width: 40px !important;
+  padding: 4px 8px !important;
+  font-size: .7rem !important;
+  box-shadow: none !important;
+}
+.manage-actions {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+  justify-self: end;
+  width: auto;
+}
+.manage-row button,
+.manage-row .edit-mini,
+.manage-row .danger.mini {
+  width: auto !important;
+  min-width: 44px !important;
+  height: 30px !important;
+  padding: 0 10px !important;
+  border-radius: 999px !important;
+  font-size: .72rem !important;
+  line-height: 1 !important;
+  justify-content: center !important;
+  box-shadow: none !important;
+}
+.manage-row .edit-mini {
+  background: #5f7f5f !important;
+  color: #fff !important;
+}
+.manage-row .danger.mini {
+  background: #f0ded9 !important;
+  color: #9b4d43 !important;
+}
+.editor.card {
+  padding: 14px !important;
+  border-radius: 20px !important;
+  box-shadow: 0 10px 26px rgba(65,88,58,.055) !important;
+}
+.editor.card h3 {
+  font-size: .92rem !important;
+  margin-bottom: 8px !important;
+}
+.editor.card label { margin-top: 8px !important; }
+.editor.card textarea { min-height: 76px !important; }
+.editor.card .button-row button {
+  width: auto !important;
+  min-width: 80px !important;
+  justify-content: center !important;
+  border-radius: 999px !important;
+  padding: 9px 14px !important;
+  font-size: .8rem !important;
+}
+@media(max-width:680px){
+  .manage-row {
+    grid-template-columns: 1fr auto !important;
+    gap: 8px !important;
+    padding: 10px !important;
+  }
+  .manage-name {
+    grid-column: 1 / -1;
+    padding-bottom: 0 !important;
+  }
+  .manage-badges {
+    grid-column: 1 / 2;
+    order: 2;
+    flex-wrap: wrap !important;
+  }
+  .manage-actions {
+    grid-column: 2 / 3;
+    order: 2;
+    align-self: center;
+  }
+  .manage-row button { order: initial !important; }
+  .manage-badges .dog-level {
+    padding: 4px 5px 4px 8px !important;
+  }
+  .manage-badges .dog-level .lv {
+    min-width: 38px !important;
+    padding: 4px 7px !important;
+  }
+}

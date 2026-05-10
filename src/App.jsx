@@ -597,9 +597,8 @@ export default function App() {
             <div className="manage-list">
               {group.items.map(([f, i]) => <div className="manage-row" key={`${f.name}-${i}`}>
                 <div className="manage-name"><FavoriteButton active={f.favorite} onClick={()=>toggleFavorite(f.name)} /><b>{f.name}</b></div>
-                <div className="manage-badges"><span className={`dog-level level-card-${f.uri}`}><em>ウリ</em><Badge value={f.uri} /></span><span className={`dog-level level-card-${f.lulu}`}><em>ルル</em><Badge value={f.lulu} /></span></div>
-                <button onClick={()=>startEdit(i)}>編集</button>
-                <button className="danger mini" onClick={()=>deleteFood(i)}>削除</button>
+                <div className="manage-badges"><span className="dog-level"><em>ウリ</em><Badge value={f.uri} /></span><span className="dog-level"><em>ルル</em><Badge value={f.lulu} /></span></div>
+                <div className="manage-actions"><button className="edit-mini" onClick={()=>startEdit(i)}>編集</button><button className="danger mini" onClick={()=>deleteFood(i)}>削除</button></div>
               </div>)}
             </div>
           </section>)}
