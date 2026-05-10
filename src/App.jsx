@@ -516,7 +516,7 @@ export default function App() {
 }
 
 function DogAvatar({ type }) {
-  const src = type === 'uri' ? '/uri-face.png' : '/lulu-face.png'
+  const src = type === 'uri' ? '/lulu-face.png' : '/uri-face.png'
   const alt = type === 'uri' ? 'ウリ' : 'ルル'
   return <div className={`dog-avatar ${type || ''}`} aria-hidden="true">
     <img src={src} alt={alt} />
