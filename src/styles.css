@@ -36,3 +36,10 @@
 .dog-avatar.lulu{background:#fff3df}
 .dog-avatar .dog-ear,.dog-avatar .dog-face,.dog-avatar .eye,.dog-avatar .nose,.dog-avatar .mouth{display:none!important}
 @media(max-width:680px){.dog-avatar{width:48px;height:48px;flex-basis:48px}}
+
+/* fixed10: remove leftover CSS-drawn dog parts behind image icons */
+.dog-avatar::before,
+.dog-avatar::after{
+  content:none!important;
+  display:none!important;
+}
