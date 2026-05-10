@@ -584,6 +584,12 @@ export default function App() {
         </div>
         {foodNotice && <div className="food-notice">{foodNotice}</div>}
         <input className="search" placeholder="管理リスト検索（食材名・分類・詳細）" value={manageQuery} onChange={e=>setManageQuery(e.target.value)} />
+        <div className="level-legend manage-level-legend">
+          <span><Badge value="safe" /> 安全</span>
+          <span><Badge value="l1" /> 少量・様子見</span>
+          <span><Badge value="l2" /> 要注意</span>
+          <span><Badge value="l3" /> NG</span>
+        </div>
         <div className="manage-groups">
           {groupedManageFoods.length === 0 && <p className="empty">該当する食材が見つかりません</p>}
           {groupedManageFoods.map(group => <section className="manage-group" key={group.cat}>
@@ -591,7 +597,7 @@ export default function App() {
             <div className="manage-list">
               {group.items.map(([f, i]) => <div className="manage-row" key={`${f.name}-${i}`}>
                 <div className="manage-name"><FavoriteButton active={f.favorite} onClick={()=>toggleFavorite(f.name)} /><b>{f.name}</b></div>
-                <div className="manage-badges"><span>ウリ <Badge value={f.uri} /></span><span>ルル <Badge value={f.lulu} /></span></div>
+                <div className="manage-badges"><span className={`dog-level level-card-${f.uri}`}><em>ウリ</em><Badge value={f.uri} /></span><span className={`dog-level level-card-${f.lulu}`}><em>ルル</em><Badge value={f.lulu} /></span></div>
                 <button onClick={()=>startEdit(i)}>編集</button>
                 <button className="danger mini" onClick={()=>deleteFood(i)}>削除</button>
               </div>)}
