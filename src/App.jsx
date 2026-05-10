@@ -177,7 +177,7 @@ export default function App() {
     const timer = setTimeout(() => {
       sessionStorage.setItem('splashDone', '1')
       setShowSplash(false)
-    }, 950)
+    }, 2400)
     return () => clearTimeout(timer)
   }, [showSplash])
 
