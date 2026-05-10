@@ -195,7 +195,7 @@ function sortFavoriteFirst(a, b) {
   return a.name.localeCompare(b.name, 'ja')
 }
 function FavoriteButton({ active, onClick }) {
-  return <button className={`star-btn ${active ? 'active' : ''}`} onClick={onClick} title={active ? 'よく使うから外す' : 'よく使うに追加'}>{active ? '★' : '☆'}</button>
+  return <button className={`star-btn ${active ? 'active' : ''}`} onClick={onClick} title={active ? 'よく使うから外す' : 'よく使うに追加'} aria-label={active ? 'よく使うから外す' : 'よく使うに追加'}>{active ? '♥' : '♡'}</button>
 }
 
 function Badge({ value }) {
@@ -510,11 +510,11 @@ export default function App() {
 
       {tab === 'quick' && <section className="panel">
         <h2>食材レベル早見表</h2>
-        <p className="note">★を付けた「よく使う食材」は各分類の上に表示されます。</p>
+        <p className="note">♡を押した「よく使う食材」は各分類の上に表示されます。</p>
         <div className="controls compact">
           <select value={quickCondition} onChange={e=>setQuickCondition(e.target.value)}>
             <option value="all">すべて表示</option>
-            <option value="favorite">★よく使うだけ</option>
+            <option value="favorite">よく使うだけ</option>
             <option value="bothSafe">2匹ともOK</option>
             <option value="uriSafe">ウリOK</option>
             <option value="luluSafe">ルルOK</option>
@@ -545,7 +545,7 @@ export default function App() {
           <input className="search" placeholder="食材名・カテゴリ・詳細で検索" value={query} onChange={e=>setQuery(e.target.value)} />
           <select value={condition} onChange={e=>setCondition(e.target.value)}>
             <option value="all">便利フィルターなし</option>
-            <option value="favorite">★よく使うだけ</option>
+            <option value="favorite">よく使うだけ</option>
             <option value="bothSafe">2匹ともOK</option>
             <option value="uriSafe">ウリOK</option>
             <option value="luluSafe">ルルOK</option>
